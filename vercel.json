@@ -3,27 +3,20 @@
   "builds": [
     {
       "src": "package.json",
-      "use": "@vercel/next"
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "out"
+      }
     }
   ],
   "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/"
-    }
+    { "handle": "filesystem" },
+    { "src": "/api/(.*)", "dest": "/api/$1" },
+    { "src": "/.*", "dest": "/index.html" }
   ],
-  "build": {
-    "env": {
-      "NODE_ENV": "production"
-    }
-  },
   "env": {
     "NODE_ENV": "production"
   },
-  "buildCommand": "prisma generate && prisma migrate deploy && next build",
-  "outputDirectory": ".next"
+  "buildCommand": "npm run build",
+  "outputDirectory": "out"
 }
