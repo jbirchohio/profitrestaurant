@@ -36,7 +36,7 @@ const inventoryItemBaseSchema = {
   restaurantId: z.string().cuid('Invalid restaurant ID'),
 };
 
-const createInventoryItemSchema = z.object(inventoryItemBaseSchema);
+const createInventoryItemSchema = z.object(inventoryItemBaseSchema).omit({ totalCost: true });
 
 // Query parameters schema
 const getInventoryQuerySchema = z.object({
@@ -228,12 +228,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid input', details: validation.error.flatten() }, { status: 400 });
     }
 
-    const { purchasedAt, ...data } = validation.data;
+    const { purchasedAt, quantity, unitPrice, ...data } = validation.data;
+    const totalCost = quantity * unitPrice;
 
     const newItem = await prisma.inventoryItem.create({
       data: {
         ...data,
+        quantity,
+        unitPrice,
         purchasedAt: new Date(purchasedAt),
+        totalCost,
       },
     });
 

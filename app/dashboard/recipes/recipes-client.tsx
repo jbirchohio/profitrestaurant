@@ -46,8 +46,8 @@ export function RecipesClient() {
       const recipesData = await recipesRes.json();
       const inventoryData = await inventoryRes.json();
       
-      setRecipes(recipesData);
-      setInventory(inventoryData);
+      setRecipes(recipesData.data);
+      setInventory(inventoryData.data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unknown error occurred');
     } finally {

@@ -15,11 +15,13 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { TrendChart } from '@/components/charts/TrendChart';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export function ExpensesClient() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
+  const [frequency, setFrequency] = useState('ONE_TIME');
 
   const chartData = (expenses || [])
     .slice()
@@ -36,8 +38,8 @@ export function ExpensesClient() {
     try {
       const response = await fetch(`/api/expenses?restaurantId=${restaurantId}`);
       if (!response.ok) throw new Error('Failed to fetch expenses');
-      const data = await response.json();
-      setExpenses(data);
+            const responseData = await response.json();
+      setExpenses(responseData.data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unknown error occurred');
     } finally {
@@ -52,10 +54,12 @@ export function ExpensesClient() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    const newExpense = {
+        const newExpense = {
       description: formData.get('description') as string,
       amount: parseFloat(formData.get('amount') as string),
-      frequency: formData.get('frequency') as string,
+      frequency: frequency,
+      category: formData.get('category') as string,
+      date: new Date().toISOString(),
       restaurantId,
     };
 
@@ -121,7 +125,26 @@ export function ExpensesClient() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div><Label htmlFor="description">Description</Label><Input id="description" name="description" required /></div>
               <div><Label htmlFor="amount">Amount</Label><Input id="amount" name="amount" type="number" step="0.01" required /></div>
-              <div><Label htmlFor="frequency">Frequency</Label><Input id="frequency" name="frequency" placeholder="e.g., monthly" required /></div>
+                            <div>
+                <Label htmlFor="category">Category</Label>
+                <Input id="category" name="category" required />
+              </div>
+              <div>
+                <Label htmlFor="frequency">Frequency</Label>
+                <Select value={frequency} onValueChange={(value) => setFrequency(value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select frequency" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ONE_TIME">One-Time</SelectItem>
+                    <SelectItem value="DAILY">Daily</SelectItem>
+                    <SelectItem value="WEEKLY">Weekly</SelectItem>
+                    <SelectItem value="MONTHLY">Monthly</SelectItem>
+                    <SelectItem value="QUARTERLY">Quarterly</SelectItem>
+                    <SelectItem value="YEARLY">Yearly</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <Button type="submit" className="w-full">Add Expense</Button>
             </form>
           </CardContent>

@@ -37,8 +37,8 @@ export function SalesClient() {
     try {
       const response = await fetch(`/api/sales?restaurantId=${restaurantId}`);
       if (!response.ok) throw new Error('Failed to fetch sales');
-      const data = await response.json();
-      setEntries(data);
+            const data = await response.json();
+      setEntries(data.data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unknown error occurred');
     } finally {

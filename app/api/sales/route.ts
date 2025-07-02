@@ -30,7 +30,7 @@ export async function GET(request: Request) {
       where: { restaurantId },
       orderBy: { date: 'desc' },
     });
-    return NextResponse.json(salesEntries);
+        return NextResponse.json({ data: salesEntries });
   } catch (error) {
     console.error('Failed to fetch sales entries:', error);
     return NextResponse.json({ error: 'Failed to fetch sales entries' }, { status: 500 });

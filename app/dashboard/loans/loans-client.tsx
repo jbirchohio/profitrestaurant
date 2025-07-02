@@ -36,8 +36,8 @@ export function LoansClient() {
     try {
       const response = await fetch(`/api/loans?restaurantId=${restaurantId}`);
       if (!response.ok) throw new Error('Failed to fetch loans');
-      const data = await response.json();
-      setLoans(data);
+            const data = await response.json();
+      setLoans(data.data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unknown error occurred');
     } finally {

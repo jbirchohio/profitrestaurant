@@ -57,7 +57,7 @@ export async function GET(request: Request) {
       where: { restaurantId },
       orderBy: { date: 'desc' },
     });
-    return NextResponse.json(laborEntries);
+        return NextResponse.json({ data: laborEntries });
   } catch (error) {
     console.error('Failed to fetch labor entries:', error);
     return NextResponse.json({ error: 'Failed to fetch labor entries' }, { status: 500 });

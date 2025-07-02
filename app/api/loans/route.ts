@@ -28,7 +28,7 @@ export async function GET(request: Request) {
       where: { restaurantId },
       orderBy: { createdAt: 'desc' },
     });
-    return NextResponse.json(loans);
+        return NextResponse.json({ data: loans });
   } catch (error) {
     console.error('Failed to fetch loans:', error);
     return NextResponse.json({ error: 'Failed to fetch loans' }, { status: 500 });

@@ -39,7 +39,7 @@ export function InventoryClient() {
       if (!response.ok) {
         throw new Error('Failed to fetch inventory');
       }
-      const data = await response.json();
+      const { data } = await response.json();
       setItems(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unknown error occurred');
@@ -61,7 +61,7 @@ export function InventoryClient() {
       category: formData.get('category') as string,
       quantity: parseFloat(formData.get('quantity') as string),
       unitPrice: parseFloat(formData.get('unitPrice') as string),
-      totalCost: parseFloat(formData.get('totalCost') as string),
+
       vendor: formData.get('vendor') as string,
       purchasedAt: new Date().toISOString(),
       restaurantId,

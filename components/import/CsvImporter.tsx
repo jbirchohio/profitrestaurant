@@ -54,7 +54,7 @@ export function CsvImporter({ restaurantId, onComplete }: CsvImporterProps) {
       formData.append('type', importType);
       formData.append('restaurantId', restaurantId);
 
-      const response = await fetch('/api/import/receipts', {
+            const response = await fetch(`/api/import/${importType}`, {
         method: 'POST',
         body: formData,
       });
@@ -191,9 +191,9 @@ export function CsvImporter({ restaurantId, onComplete }: CsvImporterProps) {
             )}
             {importType === 'inventory' && (
               <pre className="text-xs">
-                name,category,quantity,unit,unitPrice,date
-                Chicken Breast,Meat,50,lb,3.99,2023-01-01
-                Tomatoes,Produce,25,lb,1.99,2023-01-01
+                name,sku,category,quantity,unitPrice,totalCost,date
+                Chicken Breast,SKU123,Meat,50,3.99,199.50,2023-01-01
+                Tomatoes,SKU456,Produce,25,1.99,49.75,2023-01-01
               </pre>
             )}
             {importType === 'sales' && (

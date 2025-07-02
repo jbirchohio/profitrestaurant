@@ -37,7 +37,7 @@ export function LaborClient() {
     try {
       const response = await fetch(`/api/labor?restaurantId=${restaurantId}`);
       if (!response.ok) throw new Error('Failed to fetch labor data');
-      const data = await response.json();
+      const { data } = await response.json();
       setEntries(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unknown error occurred');
