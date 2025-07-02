@@ -21,7 +21,7 @@ export function LaborClient() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const chartData = entries
+  const chartData = (entries || [])
     .slice()
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     .map((entry) => ({

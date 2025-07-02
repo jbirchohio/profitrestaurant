@@ -21,7 +21,7 @@ export function ExpensesClient() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const chartData = expenses
+  const chartData = (expenses || [])
     .slice()
     .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
     .map((expense) => ({

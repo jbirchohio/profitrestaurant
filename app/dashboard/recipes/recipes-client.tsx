@@ -86,8 +86,8 @@ export function RecipesClient() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {recipes.map((recipe) => {
-                    const cost = calculateRecipeCost(recipe.ingredients);
+                  {(recipes || []).map((recipe) => {
+                    const cost = calculateRecipeCost(recipe.ingredients || []);
                     const foodCostPercentage = recipe.fixedPrice && recipe.fixedPrice > 0 ? (cost / recipe.fixedPrice) * 100 : 0;
                     return (
                       <TableRow key={recipe.id}>

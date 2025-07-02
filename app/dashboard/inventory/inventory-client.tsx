@@ -21,7 +21,7 @@ export function InventoryClient() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const chartData = items
+  const chartData = (items || [])
     .slice()
     .sort((a, b) => new Date(a.purchasedAt).getTime() - new Date(b.purchasedAt).getTime())
     .map((item) => ({
