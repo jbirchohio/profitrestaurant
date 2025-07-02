@@ -20,22 +20,36 @@ interface FinancialMetrics {
   }>;
 }
 
-// Initialize OpenAI client with runtime environment check
+// Initialize OpenAI client as null - will be initialized on the server side
 let openai: OpenAI | null = null;
 
-try {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    console.warn('OpenAI API key is not set. AI features will be disabled.');
-  } else {
-    openai = new OpenAI({
-      apiKey: apiKey,
-    });
+// Function to get OpenAI client (only works on server side)
+const getOpenAIClient = (): OpenAI | null => {
+  // This function will only work on the server side
+  if (typeof window !== 'undefined') {
+    console.warn('OpenAI client cannot be initialized in the browser');
+    return null;
   }
-} catch (error) {
-  console.error('Failed to initialize OpenAI client:', error);
-  openai = null;
-}
+
+  if (!openai) {
+    try {
+      const apiKey = process.env.OPENAI_API_KEY;
+      if (!apiKey) {
+        console.warn('OpenAI API key is not set. AI features will be disabled.');
+        return null;
+      }
+      
+      openai = new OpenAI({
+        apiKey: apiKey,
+      });
+    } catch (error) {
+      console.error('Failed to initialize OpenAI client:', error);
+      return null;
+    }
+  }
+  
+  return openai;
+};
 
 /**
  * Generates AI-powered insights based on financial data
@@ -196,9 +210,10 @@ const createErrorResponse = (message: string): CsvAnalysisResult => ({
  */
 export const analyzeCsvData = async (csvData: string, importType: 'receipts' | 'inventory' | 'sales'): Promise<CsvAnalysisResult> => {
   try {
-    if (!process.env.OPENAI_API_KEY) {
-      console.warn('OpenAI API key not found. CSV analysis not available.');
-      return createErrorResponse('AI analysis requires an OpenAI API key');
+    const openai = getOpenAIClient();
+    if (!openai) {
+      console.warn('OpenAI client not available. Running in browser or API key not set.');
+      return createErrorResponse('AI analysis is not available in this environment');
     }
 
     // Parse CSV data

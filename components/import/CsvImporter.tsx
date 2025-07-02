@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '../ui/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Terminal, Loader2 } from 'lucide-react';
-import { analyzeCsvData } from '@/lib/ai';
+import { analyzeCsvData, type CsvAnalysisResult } from '@/lib/ai';
 
 type ImportType = 'receipts' | 'inventory' | 'sales';
 
@@ -29,14 +29,7 @@ export function CsvImporter({ restaurantId, onComplete }: CsvImporterProps) {
     }
   };
 
-  const [analysis, setAnalysis] = useState<{
-    analysis: string;
-    insights: string[];
-    stats?: { totalRecords: number; sampleSize: number; fields: string[] };
-    summary?: string;
-    recommendations?: string[];
-    error?: string;
-  } | null>(null);
+  const [analysis, setAnalysis] = useState<CsvAnalysisResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -76,7 +69,24 @@ export function CsvImporter({ restaurantId, onComplete }: CsvImporterProps) {
       setIsAnalyzing(true);
       try {
         const fileContent = await file.text();
-        const analysis = await analyzeCsvData(fileContent, importType);
+        
+        // Call the API endpoint for analysis
+        const response = await fetch('/api/analyze-csv', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            csvData: fileContent,
+            importType,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to analyze CSV data');
+        }
+
+        const analysis = await response.json();
         
         // Ensure we have a consistent shape for the analysis
         const processedAnalysis = {
