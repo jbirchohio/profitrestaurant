@@ -105,13 +105,18 @@ export async function POST(request: Request) {
     });
 
     console.log('Successfully created labor entry:', newLaborEntry);
-    return NextResponse.json(newLaborEntry, { status: 201 });
+    return NextResponse.json({ data: newLaborEntry }, { status: 201 });
     
   } catch (error) {
     console.error('Failed to create labor entry:', error);
-    return NextResponse.json({ 
-      error: 'Failed to create labor entry',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+    
+    return NextResponse.json(
+      { 
+        error: 'Failed to create labor entry',
+        ...(process.env.NODE_ENV === 'development' && { details: errorMessage })
+      },
+      { status: 500 }
+    );
   }
 }

@@ -236,19 +236,19 @@ export async function POST(request: Request) {
     const { ingredients, ...recipeData } = validation.data;
 
     // Use a transaction to ensure the recipe and its ingredients are created together
-    const newRecipe = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-      const recipe = await tx.recipe.create({
+    const newRecipe = await prisma.$transaction(async (prisma) => {
+      const recipe = await prisma.recipe.create({
         data: recipeData,
       });
 
-      await tx.recipeIngredient.createMany({
+      await prisma.recipeIngredient.createMany({
         data: ingredients.map((ing) => ({
           ...ing,
           recipeId: recipe.id,
         })),
       });
 
-      return tx.recipe.findUnique({
+      return prisma.recipe.findUnique({
         where: { id: recipe.id },
         include: { ingredients: true },
       });

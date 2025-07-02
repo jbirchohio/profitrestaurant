@@ -24,8 +24,10 @@ export default function RootLayout({
       <head>
         <link rel="icon" href="/favicon.ico" sizes="any" />
       </head>
-      <body className="min-h-screen bg-white">
-        {children}
+      <body>
+        <main className="min-h-screen bg-white">
+          {children}
+        </main>
       </body>
     </html>
   );

@@ -44,23 +44,23 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { restaurantId, date, ...saleData } = body;
+    const validation = createSaleEntrySchema.safeParse(body);
 
-    if (!restaurantId) {
-      return NextResponse.json({ error: 'Restaurant ID is required' }, { status: 400 });
+    if (!validation.success) {
+      return NextResponse.json({ error: 'Invalid input', details: validation.error.flatten() }, { status: 400 });
     }
 
+        const { restaurantId, date, ...saleData } = validation.data;
+
     // Calculate net sales before saving
-    const netSales = calculateNetSales(saleData);
+    const netSales = calculateNetSales(validation.data);
 
     const newSaleEntry = await prisma.saleEntry.create({
       data: {
         ...saleData,
-        date: new Date(date), // Ensure date is a Date object
+        date: new Date(date),
         netSales,
-        restaurant: {
-          connect: { id: restaurantId },
-        },
+        restaurantId: restaurantId,
       },
     });
     return NextResponse.json(newSaleEntry, { status: 201 });

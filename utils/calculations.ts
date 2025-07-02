@@ -4,7 +4,7 @@ import { SaleEntry } from '@prisma/client';
  * Calculates Net Sales from a SaleEntry object.
  * Net Sales = Gross Sales - Discounts - Refunds
  */
-export function calculateNetSales(sale: Omit<SaleEntry, 'id' | 'createdAt' | 'restaurantId' | 'netSales'>): number {
+export function calculateNetSales(sale: { grossSales: number; discounts: number; refunds: number }): number {
   return sale.grossSales - sale.discounts - sale.refunds;
 }
 
