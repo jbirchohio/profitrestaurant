@@ -1,0 +1,102 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Restaurant {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  inventoryItems InventoryItem[]
+  sales         SaleEntry[]
+  labor         LaborEntry[]
+  loans         Loan[]
+  expenses      Expense[]
+  recipes       Recipe[]
+}
+
+model InventoryItem {
+  id           String   @id @default(cuid())
+  sku          String   @unique
+  name         String
+  category     String
+  quantity     Float
+  unitPrice    Float
+  totalCost    Float
+  vendor       String?
+  purchasedAt  DateTime
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  restaurantId String
+  createdAt    DateTime @default(now())
+  recipeIngredients RecipeIngredient[]
+}
+
+model SaleEntry {
+  id             String   @id @default(cuid())
+  date           DateTime
+  grossSales     Float
+  discounts      Float
+  refunds        Float
+  deliveryFees   Float
+  tips           Float
+  netSales       Float
+  restaurant     Restaurant @relation(fields: [restaurantId], references: [id])
+  restaurantId   String
+  createdAt      DateTime @default(now())
+}
+
+model LaborEntry {
+  id          String   @id @default(cuid())
+  date        DateTime
+  totalWages  Float
+  totalHours  Float
+  employees   Int
+  restaurant  Restaurant @relation(fields: [restaurantId], references: [id])
+  restaurantId String
+  createdAt   DateTime @default(now())
+}
+
+model Loan {
+  id             String   @id @default(cuid())
+  description    String
+  balance        Float
+  interestRate   Float
+  paymentAmount  Float
+  paymentCycle   String // e.g., "monthly", "weekly"
+  restaurant     Restaurant @relation(fields: [restaurantId], references: [id])
+  restaurantId   String
+  createdAt      DateTime @default(now())
+}
+
+model Expense {
+  id          String   @id @default(cuid())
+  description String
+  amount      Float
+  frequency   String // e.g., "monthly", "one-time"
+  restaurant  Restaurant @relation(fields: [restaurantId], references: [id])
+  restaurantId String
+  createdAt   DateTime @default(now())
+}
+
+model Recipe {
+  id             String   @id @default(cuid())
+  name           String
+  fixedPrice     Float?
+  restaurant     Restaurant @relation(fields: [restaurantId], references: [id])
+  restaurantId   String
+  ingredients    RecipeIngredient[]
+  createdAt      DateTime @default(now())
+}
+
+model RecipeIngredient {
+  id              String   @id @default(cuid())
+  quantityUsed    Float
+  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id])
+  inventoryItemId String
+  recipe          Recipe @relation(fields: [recipeId], references: [id])
+  recipeId        String
+}
