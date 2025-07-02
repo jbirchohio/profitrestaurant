@@ -1,41 +1,30 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
+  // Remove output: 'export' for Vercel deployment
   reactStrictMode: true,
-  optimizeFonts: false,
+  swcMinify: true,
   
-  // Required for static export
+  // Image optimization
   images: {
+    domains: ['vercel.com'],
     unoptimized: true,
   },
   
   // Webpack configuration
-  webpack: (config, { isServer, dev }) => {
-    config.resolve.fallback = {
-      ...config.resolve.fallback,
-      fs: false,
-      path: false,
-      os: false,
-    };
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      config.resolve.fallback = {
+        fs: false,
+        path: false,
+        os: false,
+      };
+    }
     return config;
   },
   
   // Environment variables
   env: {
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || '',
-  },
-  
-  // Enable React DevTools in production
-  reactProductionProfiling: true,
-  
-  // Disable type checking during build
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  
-  // Disable ESLint during build
-  eslint: {
-    ignoreDuringBuilds: true,
   },
   
   // Enable source maps in production
