@@ -226,7 +226,7 @@ export async function POST(request: Request) {
 
     console.log('Successfully created expense:', newExpense.id);
     
-    return NextResponse.json(newExpense, { status: 201 });
+    return NextResponse.json({ data: newExpense }, { status: 201 });
     
   } catch (error: unknown) {
     console.error('Failed to create expense:', error);
@@ -250,14 +250,13 @@ export async function POST(request: Request) {
     
     // Generic error response
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-    const errorResponse: { error: string; details?: string } = { 
-      error: 'Failed to create expense'
-    };
     
-    if (process.env.NODE_ENV === 'development') {
-      errorResponse.details = errorMessage;
-    }
-    
-    return NextResponse.json(errorResponse, { status: 500 });
+    return NextResponse.json(
+      { 
+        error: 'Failed to create expense',
+        ...(process.env.NODE_ENV === 'development' && { details: errorMessage })
+      },
+      { status: 500 }
+    );
   }
 }

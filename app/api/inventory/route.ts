@@ -241,12 +241,34 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json(newItem, { status: 201 });
+    return NextResponse.json({ data: newItem }, { status: 201 });
   } catch (error) {
     console.error('Failed to create inventory item:', error);
-    if (error instanceof Error && 'code' in error && (error as any).code === 'P2002') {
-        return NextResponse.json({ error: 'An inventory item with this SKU already exists.' }, { status: 409 });
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+    
+    // Handle specific Prisma errors
+    if (error && typeof error === 'object' && 'code' in error) {
+      if (error.code === 'P2002') {
+        return NextResponse.json(
+          { error: 'An inventory item with this SKU already exists' },
+          { status: 409 }
+        );
+      }
+      
+      if (error.code === 'P2025') {
+        return NextResponse.json(
+          { error: 'Related record not found' },
+          { status: 404 }
+        );
+      }
     }
-    return NextResponse.json({ error: 'Failed to create inventory item' }, { status: 500 });
+    
+    return NextResponse.json(
+      { 
+        error: 'Failed to create inventory item',
+        ...(process.env.NODE_ENV === 'development' && { details: errorMessage })
+      },
+      { status: 500 }
+    );
   }
 }
