@@ -4,12 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
+    "build": "npx prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
-    "postinstall": "prisma generate",
-    "vercel-build": "node vercel-build.js",
-    "vercel-dev": "prisma generate && next dev"
+    "postinstall": "npx prisma generate",
+    "vercel-build": "npx prisma generate && npx prisma db push --accept-data-loss && next build"
   },
   "prisma": {
     "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
