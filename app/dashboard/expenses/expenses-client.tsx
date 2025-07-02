@@ -14,11 +14,20 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { TrendChart } from '@/components/charts/TrendChart';
 
 export function ExpensesClient() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const chartData = expenses
+    .slice()
+    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+    .map((expense) => ({
+      date: new Date(expense.createdAt).toLocaleDateString(),
+      value: expense.amount,
+    }));
 
   const restaurantId = 'clxne1o4w00007867z1f896l9';
 
@@ -69,6 +78,9 @@ export function ExpensesClient() {
 
   return (
     <div className="grid gap-8 md:grid-cols-3">
+      <div className="md:col-span-3">
+        <TrendChart data={chartData} title="Expenses Over Time" />
+      </div>
       <div className="md:col-span-2">
         <Card>
           <CardHeader>

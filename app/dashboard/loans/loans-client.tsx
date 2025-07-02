@@ -14,11 +14,20 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { TrendChart } from '@/components/charts/TrendChart';
 
 export function LoansClient() {
   const [loans, setLoans] = useState<Loan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const chartData = loans
+    .slice()
+    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+    .map((loan) => ({
+      date: new Date(loan.createdAt).toLocaleDateString(),
+      value: loan.balance,
+    }));
 
   const restaurantId = 'clxne1o4w00007867z1f896l9';
 
@@ -71,6 +80,9 @@ export function LoansClient() {
 
   return (
     <div className="grid gap-8 md:grid-cols-3">
+      <div className="md:col-span-3">
+        <TrendChart data={chartData} title="Loan Balances Over Time" />
+      </div>
       <div className="md:col-span-2">
         <Card>
           <CardHeader>
