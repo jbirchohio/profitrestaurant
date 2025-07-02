@@ -37,7 +37,8 @@ export function ExpensesClient() {
       const response = await fetch(`/api/expenses?restaurantId=${restaurantId}`);
       if (!response.ok) throw new Error('Failed to fetch expenses');
       const data = await response.json();
-      setExpenses(data);
+      // Support both plain array and { data: [] } responses
+      setExpenses(Array.isArray(data) ? data : data.data ?? []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unknown error occurred');
     } finally {

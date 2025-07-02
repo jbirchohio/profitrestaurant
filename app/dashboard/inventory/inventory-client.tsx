@@ -40,7 +40,8 @@ export function InventoryClient() {
         throw new Error('Failed to fetch inventory');
       }
       const data = await response.json();
-      setItems(data);
+      // Support both plain array and { data: [] } responses
+      setItems(Array.isArray(data) ? data : data.data ?? []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unknown error occurred');
     } finally {
