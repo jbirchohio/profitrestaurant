@@ -53,9 +53,9 @@ export const getAiInsights = async (data: FinancialMetrics): Promise<string[]> =
     // Prepare the prompt for the AI
     const prompt = createPrompt(data);
 
-    // If openai is still null after the check, return default insights
+    // Double-check openai is still available
     if (!openai) {
-      console.warn('OpenAI client is not available. Using default insights.');
+      console.warn('OpenAI client became unavailable. Using default insights.');
       return generateDefaultInsights(data);
     }
 
@@ -163,35 +163,57 @@ function generateDefaultInsights(data: FinancialMetrics): string[] {
   return insights.slice(0, 5); // Return max 5 insights
 }
 
+// Define the analysis result type to match what CsvImporter expects
+export type CsvAnalysisResult = {
+  analysis: string;
+  insights: string[];
+  stats?: {
+    totalRecords: number;
+    sampleSize: number;
+    fields: string[];
+  };
+};
+
+// Helper function to create a valid error response
+const createErrorResponse = (message: string): CsvAnalysisResult => ({
+  analysis: message,
+  insights: [],
+  stats: {
+    totalRecords: 0,
+    sampleSize: 0,
+    fields: []
+  }
+});
+
 /**
  * Analyzes CSV data and provides AI-powered insights
  * @param csvData Raw CSV string data
  * @param importType Type of data being imported ('receipts' | 'inventory' | 'sales')
  * @returns Object containing analysis and insights
  */
-export const analyzeCsvData = async (csvData: string, importType: 'receipts' | 'inventory' | 'sales') => {
+export const analyzeCsvData = async (csvData: string, importType: 'receipts' | 'inventory' | 'sales'): Promise<CsvAnalysisResult> => {
   try {
     if (!process.env.OPENAI_API_KEY) {
       console.warn('OpenAI API key not found. CSV analysis not available.');
-      return { analysis: 'AI analysis requires an OpenAI API key', insights: [] };
+      return createErrorResponse('AI analysis requires an OpenAI API key');
     }
 
     // Parse CSV data
-    const { data, errors } = await new Promise<any>((resolve) => {
+    const { data, errors, meta } = await new Promise<any>((resolve) => {
       parse(csvData, {
         header: true,
         skipEmptyLines: true,
-        complete: (results) => resolve(results),
-        error: (error: Error) => resolve({ data: [], errors: [error] })
+        complete: (results: any) => resolve(results),
+        error: (error: Error) => resolve({ data: [], errors: [error], meta: { fields: [] } })
       });
     });
 
     if (errors && errors.length > 0) {
-      throw new Error(`CSV parsing error: ${errors[0].message}`);
+      return createErrorResponse(`CSV parsing error: ${errors[0].message}`);
     }
 
     if (!data || data.length === 0) {
-      return { analysis: 'No valid data found in the CSV', insights: [] };
+      return createErrorResponse('No valid data found in the CSV');
     }
 
     // Take a sample of the data for analysis (to avoid token limits)
@@ -236,11 +258,7 @@ export const analyzeCsvData = async (csvData: string, importType: 'receipts' | '
     // Check if OpenAI client is available
     if (!openai) {
       console.warn('OpenAI client is not available. Cannot analyze CSV data.');
-      return {
-        summary: 'AI analysis is currently unavailable.',
-        insights: ['Please check your OpenAI API key configuration.'],
-        recommendations: []
-      };
+      return createErrorResponse('AI analysis is currently unavailable. Please check your OpenAI API key configuration.');
     }
 
     // Call OpenAI API for analysis with more detailed instructions
@@ -288,10 +306,8 @@ export const analyzeCsvData = async (csvData: string, importType: 'receipts' | '
     
   } catch (error: unknown) {
     console.error('Error analyzing CSV data with AI:', error);
-    return {
-      analysis: 'Error analyzing CSV data',
-      insights: [],
-      error: error instanceof Error ? error.message : 'Unknown error'
-    };
+    return createErrorResponse(
+      `Error analyzing CSV data: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
   }
 };
