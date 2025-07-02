@@ -329,3 +329,114 @@ export const analyzeCsvData = async (csvData: string, importType: 'receipts' | '
     );
   }
 };
+
+export interface IngredientInput {
+  name: string;
+  averageUnitCost: number;
+  weight?: number;
+  lockedQty?: number;
+}
+
+export interface OptimizedRecipe {
+  ingredients: { name: string; quantity: number; cost: number }[];
+  totalCost: number;
+  costPercentage: number;
+  overBudget: boolean;
+}
+
+function simpleOptimize(
+  salesPrice: number,
+  targetPct: number,
+  items: IngredientInput[]
+): OptimizedRecipe {
+  const budget = salesPrice * (targetPct / 100);
+  let remainingBudget = budget;
+  let totalCost = 0;
+  const results: { name: string; quantity: number; cost: number }[] = [];
+  const unlocked: IngredientInput[] = [];
+
+  items.forEach((ing) => {
+    if (ing.lockedQty && ing.averageUnitCost) {
+      const cost = ing.lockedQty * ing.averageUnitCost;
+      results.push({ name: ing.name, quantity: ing.lockedQty, cost });
+      totalCost += cost;
+      remainingBudget -= cost;
+    } else {
+      unlocked.push(ing);
+    }
+  });
+
+  const totalWeight = unlocked.reduce((sum, i) => sum + (i.weight ?? 0), 0);
+  unlocked.forEach((ing) => {
+    const weight =
+      totalWeight > 0
+        ? (ing.weight ?? 0) / totalWeight
+        : 1 / unlocked.length;
+    const allocation = remainingBudget * weight;
+    const qty = ing.averageUnitCost
+      ? allocation / ing.averageUnitCost
+      : 0;
+    results.push({ name: ing.name, quantity: qty, cost: allocation });
+    totalCost += allocation;
+  });
+
+  return {
+    ingredients: results,
+    totalCost,
+    costPercentage: (totalCost / salesPrice) * 100,
+    overBudget: totalCost > budget,
+  };
+}
+
+export async function generateRecipeBuild(params: {
+  salesPrice: number;
+  targetFoodCostPct: number;
+  ingredients: IngredientInput[];
+  strategy?: string;
+}): Promise<OptimizedRecipe> {
+  const { salesPrice, targetFoodCostPct, ingredients, strategy } = params;
+  const openai = getOpenAIClient();
+  if (!openai) {
+    return simpleOptimize(salesPrice, targetFoodCostPct, ingredients);
+  }
+
+  const budget = salesPrice * (targetFoodCostPct / 100);
+  const system =
+    'You are a culinary cost optimizer. Given ingredient costs, return JSON with suggested ounces for each ingredient to meet the budget.';
+  const ingredientInfo = ingredients
+    .map((i) => `${i.name} $${i.averageUnitCost}/oz weight:${i.weight ?? ''} locked:${i.lockedQty ?? ''}`)
+    .join('\n');
+  const messages: ChatCompletionMessageParam[] = [
+    { role: 'system', content: system },
+    {
+      role: 'user',
+      content: `Sale price: $${salesPrice}\nTarget cost: ${targetFoodCostPct}% (budget $${budget.toFixed(
+        2
+      )})\nIngredients:\n${ingredientInfo}\nStrategy: ${strategy ||
+        'balanced'}\nReturn JSON array like [{"name":"Ingredient","quantity":oz,"cost":num}] and totalCost.`,
+    },
+  ];
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4',
+      messages,
+      temperature: 0.4,
+      max_tokens: 300,
+    });
+    const text = response.choices[0].message?.content || '';
+    const json = JSON.parse(text.trim());
+    const results = json.ingredients as { name: string; quantity: number; cost: number }[];
+    const totalCost = json.totalCost as number;
+    return {
+      ingredients: results,
+      totalCost,
+      costPercentage: (totalCost / salesPrice) * 100,
+      overBudget: totalCost > budget,
+    };
+  } catch (err) {
+    console.error('AI optimization failed, using fallback:', err);
+    return simpleOptimize(salesPrice, targetFoodCostPct, ingredients);
+  }
+}
+
