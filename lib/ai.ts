@@ -167,6 +167,9 @@ function generateDefaultInsights(data: FinancialMetrics): string[] {
 export type CsvAnalysisResult = {
   analysis: string;
   insights: string[];
+  summary?: string;
+  recommendations?: string[];
+  error?: string;
   stats?: {
     totalRecords: number;
     sampleSize: number;

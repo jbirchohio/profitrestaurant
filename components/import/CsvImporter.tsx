@@ -33,6 +33,9 @@ export function CsvImporter({ restaurantId, onComplete }: CsvImporterProps) {
     analysis: string;
     insights: string[];
     stats?: { totalRecords: number; sampleSize: number; fields: string[] };
+    summary?: string;
+    recommendations?: string[];
+    error?: string;
   } | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
@@ -71,14 +74,44 @@ export function CsvImporter({ restaurantId, onComplete }: CsvImporterProps) {
 
       // If import is successful, analyze the data
       setIsAnalyzing(true);
-      const fileContent = await file.text();
-      const analysis = await analyzeCsvData(fileContent, importType);
-      setAnalysis(analysis);
+      try {
+        const fileContent = await file.text();
+        const analysis = await analyzeCsvData(fileContent, importType);
+        
+        // Ensure we have a consistent shape for the analysis
+        const processedAnalysis = {
+          analysis: analysis.analysis || analysis.summary || 'Analysis completed',
+          insights: analysis.insights || [],
+          stats: analysis.stats || {
+            totalRecords: 0,
+            sampleSize: 0,
+            fields: []
+          },
+          summary: analysis.summary,
+          recommendations: analysis.recommendations || [],
+          error: analysis.error
+        };
+        
+        setAnalysis(processedAnalysis);
 
-      toast({
-        title: 'Success',
-        description: `${data.message || 'File imported successfully'}. ${analysis.insights.length} insights generated.`,
-      });
+        toast({
+          title: 'Success',
+          description: `${data.message || 'File imported successfully'}. ${processedAnalysis.insights.length} insights generated.`,
+        });
+      } catch (error) {
+        console.error('Analysis error:', error);
+        setAnalysis({
+          analysis: 'Analysis failed',
+          insights: ['Failed to analyze the uploaded file. Please try again.'],
+          error: error instanceof Error ? error.message : 'Unknown error during analysis'
+        });
+        
+        toast({
+          title: 'Analysis Error',
+          description: 'The file was imported, but we encountered an error during analysis.',
+          variant: 'destructive',
+        });
+      }
 
       setFile(null);
       if (onComplete) onComplete();
