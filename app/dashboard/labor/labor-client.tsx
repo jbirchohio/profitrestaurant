@@ -43,29 +43,57 @@ export function LaborClient() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const newEntry = {
-      date: new Date(formData.get('date') as string).toISOString(),
-      totalWages: parseFloat(formData.get('totalWages') as string),
-      totalHours: parseFloat(formData.get('totalHours') as string),
-      employees: parseInt(formData.get('employees') as string, 10),
-      restaurantId,
-    };
-
+    setError(null);
+    
     try {
+      const formData = new FormData(event.currentTarget);
+      const dateInput = formData.get('date') as string;
+      
+      // Validate date input
+      if (!dateInput) {
+        throw new Error('Date is required');
+      }
+      
+      // Create a date string in local timezone but ensure it's in ISO format
+      const localDate = new Date(dateInput);
+      if (isNaN(localDate.getTime())) {
+        throw new Error('Invalid date format');
+      }
+      
+      // Format date to ISO string without timezone offset
+      const formattedDate = new Date(localDate.getTime() - (localDate.getTimezoneOffset() * 60000)).toISOString();
+      
+      const newEntry = {
+        date: formattedDate,
+        totalWages: parseFloat(formData.get('totalWages') as string),
+        totalHours: parseFloat(formData.get('totalHours') as string),
+        employees: parseInt(formData.get('employees') as string, 10),
+        restaurantId,
+      };
+
+      console.log('Submitting labor entry:', newEntry);
+      
       const response = await fetch('/api/labor', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newEntry),
       });
+      
+      const responseData = await response.json();
+      
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to add entry');
+        console.error('API Error:', responseData);
+        throw new Error(responseData.error || responseData.message || 'Failed to add entry');
       }
-      fetchLabor();
+      
+      // Refresh the labor entries
+      await fetchLabor();
       event.currentTarget.reset();
+      
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unknown error occurred');
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+      console.error('Error in handleSubmit:', errorMessage, err);
+      setError(errorMessage);
     }
   }
 
