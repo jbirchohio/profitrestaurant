@@ -163,7 +163,7 @@ export async function GET(request: Request) {
                 name: true,
                 sku: true,
                 quantity: true,
-                unit: true,
+                unitPrice: true,
               },
             },
           },
@@ -186,7 +186,6 @@ export async function GET(request: Request) {
       _count: true,
       _avg: {
         fixedPrice: true,
-        preparationTime: true,
       },
       _sum: {
         fixedPrice: true,
@@ -203,8 +202,7 @@ export async function GET(request: Request) {
       },
       summary: {
         totalRecipes: stats._count,
-        averagePrice: stats._avg.fixedPrice || 0,
-        averagePrepTime: stats._avg.preparationTime || 0,
+        averagePrice: stats._avg?.fixedPrice ?? 0,
       },
     });
     
