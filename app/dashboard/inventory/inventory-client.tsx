@@ -14,11 +14,20 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { TrendChart } from '@/components/charts/TrendChart';
 
 export function InventoryClient() {
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const chartData = items
+    .slice()
+    .sort((a, b) => new Date(a.purchasedAt).getTime() - new Date(b.purchasedAt).getTime())
+    .map((item) => ({
+      date: new Date(item.purchasedAt).toLocaleDateString(),
+      value: item.totalCost,
+    }));
 
   // Dummy restaurantId. In a real multi-tenant app, this would come from auth/context.
   const restaurantId = 'clxne1o4w00007867z1f896l9'; // Replace with a real ID from your DB
@@ -82,6 +91,9 @@ export function InventoryClient() {
 
   return (
     <div className="grid gap-8 md:grid-cols-3">
+      <div className="md:col-span-3">
+        <TrendChart data={chartData} title="Inventory Purchases Over Time" />
+      </div>
       <div className="md:col-span-2">
         <Card>
           <CardHeader>
