@@ -15,6 +15,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { calculateRecipeCost } from '@/utils/calculations';
+import { RecipeOptimizer } from '@/components/recipes/RecipeOptimizer';
 
 // Define a type for Recipe with its relations
 type RecipeWithRelations = Recipe & {
@@ -120,6 +121,10 @@ export function RecipesClient() {
             </form>
           </CardContent>
         </Card>
+
+        <div className="mt-8">
+          <RecipeOptimizer />
+        </div>
       </div>
     </div>
   );
