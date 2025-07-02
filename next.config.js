@@ -25,6 +25,13 @@ const nextConfig = {
   // Environment variables
   env: {
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || '',
+    // Make sure the OPENAI_API_KEY is available on the server side
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+  },
+  
+  // Enable server components external packages
+  experimental: {
+    serverComponentsExternalPackages: ['openai'],
   },
   
   // Enable source maps in production

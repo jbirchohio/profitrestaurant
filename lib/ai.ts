@@ -20,10 +20,22 @@ interface FinancialMetrics {
   }>;
 }
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Initialize OpenAI client with runtime environment check
+let openai: OpenAI | null = null;
+
+try {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    console.warn('OpenAI API key is not set. AI features will be disabled.');
+  } else {
+    openai = new OpenAI({
+      apiKey: apiKey,
+    });
+  }
+} catch (error) {
+  console.error('Failed to initialize OpenAI client:', error);
+  openai = null;
+}
 
 /**
  * Generates AI-powered insights based on financial data
@@ -32,14 +44,20 @@ const openai = new OpenAI({
  */
 export const getAiInsights = async (data: FinancialMetrics): Promise<string[]> => {
   try {
-    // If no OpenAI API key is set, return default insights
-    if (!process.env.OPENAI_API_KEY) {
-      console.warn('OpenAI API key not found. Using default insights.');
+    // If OpenAI client is not initialized, return default insights
+    if (!openai) {
+      console.warn('OpenAI client not initialized. Using default insights.');
       return generateDefaultInsights(data);
     }
 
     // Prepare the prompt for the AI
     const prompt = createPrompt(data);
+
+    // If openai is still null after the check, return default insights
+    if (!openai) {
+      console.warn('OpenAI client is not available. Using default insights.');
+      return generateDefaultInsights(data);
+    }
 
     // Define messages with proper typing
     const messages: ChatCompletionMessageParam[] = [
@@ -92,7 +110,7 @@ function createPrompt(data: FinancialMetrics): string {
     - Revenue Change from last month: ${data.revenueChange}%
     
     ${data.highFoodCostRecipes?.length ? `
-    High Food Cost Recipes (cost > 35% of menu price):
+    High Food Cost Recipes (cost > 30% of menu price):
     ${data.highFoodCostRecipes.map(r => `- ${r.name}: ${r.costPercentage}%`).join('\n    ')}
     ` : ''}
     
@@ -213,6 +231,16 @@ export const analyzeCsvData = async (csvData: string, importType: 'receipts' | '
                      `5. Specific recommendations to increase revenue\n\n` +
                      `Data sample:\n${JSON.stringify(sampleData, null, 2)}`;
         break;
+    }
+
+    // Check if OpenAI client is available
+    if (!openai) {
+      console.warn('OpenAI client is not available. Cannot analyze CSV data.');
+      return {
+        summary: 'AI analysis is currently unavailable.',
+        insights: ['Please check your OpenAI API key configuration.'],
+        recommendations: []
+      };
     }
 
     // Call OpenAI API for analysis with more detailed instructions
